@@ -30,7 +30,7 @@ def passwordCreation():
     """
     abcd = "abcdefghijklmnopqrstuvwyzABCDEFGHIJKLMNOPQRSTUVWYZ"
     newPass = ""
-    for i in range(0,8):
+    for i in range(0,5):
         newPass += str(random.randint(0,10))
         newPass += str(abcd[random.randint(0,len(abcd)-1)])
     return newPass
@@ -60,7 +60,7 @@ def passwordHash(newPass):
     return -1
 
 def retrieveEncryptedPass(user_id):
-    cur.execute("SELECT password FROM users WHERE id='"+user_id+"'")
+    cur.execute("SELECT encrypted_password FROM users WHERE id='"+str(user_id)+"'")
     q_result = cur.fetchall()
     if (len(q_result)>0):
         return q_result[0][0]
@@ -85,6 +85,7 @@ def email_recovery(email):
         print("Unexpected error:", e)
         return jsonify([])
         
+    newPass = passwordCreation()
     user_id = passwordHash(newPass)
     if (user_id<0):
         return jsonify([])
