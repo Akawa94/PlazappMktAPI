@@ -128,7 +128,8 @@ def user_vector(user_id):
 
     # these will be feed into a subsequence of funcs
     # which will return a series of ids for each table
-
+    ffs = []
+    ffs.append(1)
     final_result = {}
     final_result['categories'] = []
     final_result['stores'] = []
