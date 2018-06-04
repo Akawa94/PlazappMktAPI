@@ -99,6 +99,19 @@ def email_recovery(email):
     print(cur.rowcount)
     return jsonify({'newPass': newPass})
 
+@app.route("/mkt/password_change/<userid>/<password>")
+def password_change(userid,password):
+    user_id = passwordHash(password)
+    if (user_id) < 0:
+        return jsonify([])
+    newEncryptedPass = retrieveEncryptedPass(user_id)
+    if (newEncryptedPass == '-1'):
+        return jsonify([])
+    cur.execute("UPDATE users SET encrypted_password='"+newEncryptedPass+"' WHERE id='"+userid+"'")
+    conn.commit()
+    return jsonify({'success':'success'})
+        
+
 @app.route("/mkt/user_vector/<user_id>")
 def user_vector(user_id):
     try:
