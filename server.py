@@ -11,18 +11,9 @@ app = Flask(__name__)
 conn = psycopg2.connect("dbname=plaza_app user=inf227")
 cur = conn.cursor()
 
-@app.route("/mkt/user_test")
-def user_test():
-    try:
-        cur.execute("SELECT * FROM users")
-        q_result = cur.fetchall()
-        if (len(q_result)==0):
-            return jsonify([])
-        else:
-            return jsonify(q_result)
-    except Exception as e:
-        print(e)
-        return jsonify([])
+
+
+
 
 def passwordCreation():
     """
@@ -66,10 +57,51 @@ def retrieveEncryptedPass(user_id):
         return q_result[0][0]
     else:
         return '-1'
+    
+def getName(preferences, p_id):
+    for pref in preferences:
+        if pref[0] == p_id:
+            return pref[1]
+    return 'None found'
+    
+@app.route("/mkt/recommended_categories/<user_id>")
+def recommended_categories(user_id):
+    range_top = 100
+    range_step = 10
+    cur.execute("select store_category_id from reviewed_products where user_id="+str(user_id)+"order by created_at desc")
+    user_searches = cur.fetchall()
+    cur.execute("select distinct store_category_id from preference_store_categories where user_id="+str(user_id)) 
+    user_current_preferences = cur.fetchall()
+    print(user_current_preferences)
+    cur.execute("select id,name from store_categories")
+    all_preferences = cur.fetchall()
+    pref_dict = {}
+    for pref in all_preferences:
+        pref_dict[pref[0]]=0
+    for pref in user_current_preferences:
+        pref_dict[pref[0]]+=10
+    for i in range(0,range_top,range_step):
+        pref_range = user_searches[i:range_step]
+        if (len(pref_range)==0):
+            break
+        for pref in pref_range:
+            pref_dict[pref[0]]+=int(int(range_top/range_step)-i)
+    d = pref_dict
+    final_results = [(k, d[k]) for k in sorted(d, key=d.get, reverse=True)][:5]    
+    print(final_results)
+    final_dict = []
+    for e in final_results:
+        final_dict.append({
+            'name': getName(all_preferences,e[0]),
+            'id': e[0],
+            'score': e[1]
+        })
+    # transform answer same as reached by admin services
+    return jsonify(final_dict)
+
 
 @app.route("/mkt/email_recovery/<email>")
 def email_recovery(email):
-
     try:
         print(email)
         cur.execute("SELECT * FROM users WHERE email='"+email+"'")
@@ -149,3 +181,7 @@ def user_vector(user_id):
     final_result['products'] = []
     final_result['user_data'] = data
     return jsonify(final_result)
+
+
+
+
