@@ -91,6 +91,49 @@ def recommended_categories(user_id):
     print(final_results)
     final_dict = []
     for e in final_results:
+        if (e[1] <= 0):
+            continue
+        final_dict.append({
+            'name': getName(all_preferences,e[0]),
+            'id': e[0],
+            'score': e[1]
+        })
+    # transform answer same as reached by admin services
+    return jsonify(final_dict)
+
+@app.route("/mkt/recommended_categories_all/<email>")
+def recommended_categories_all(email):
+    # search for user
+    cur.execute("select id from users where email='"+email+"'")
+    q_results = cur.fetchall()
+    if (len(q_results)==0):
+        return jsonify([])
+    user_id = q_results[0][0]
+    range_top = 100
+    range_step = 10
+    cur.execute("select store_category_id from reviewed_products where user_id="+str(user_id)+"order by created_at desc")
+    user_searches = cur.fetchall()
+    cur.execute("select distinct store_category_id from preference_store_categories where user_id="+str(user_id)) 
+    user_current_preferences = cur.fetchall()
+    print(user_current_preferences)
+    cur.execute("select id,name from store_categories")
+    all_preferences = cur.fetchall()
+    pref_dict = {}
+    for pref in all_preferences:
+        pref_dict[pref[0]]=0
+    for pref in user_current_preferences:
+        pref_dict[pref[0]]+=10
+    for i in range(0,range_top,range_step):
+        pref_range = user_searches[i:range_step]
+        if (len(pref_range)==0):
+            break
+        for pref in pref_range:
+            pref_dict[pref[0]]+=int(int(range_top/range_step)-i)
+    d = pref_dict
+    final_results = [(k, d[k]) for k in sorted(d, key=d.get, reverse=True)]    
+    print(final_results)
+    final_dict = []
+    for e in final_results:
         final_dict.append({
             'name': getName(all_preferences,e[0]),
             'id': e[0],
